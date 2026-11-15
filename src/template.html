@@ -1,0 +1,470 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>찬송가 퀴즈</title>
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#24385c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="찬송가퀴즈">
+<style>
+:root{--ink:#26303f;--navy:#2f4b73;--navy2:#24385c;--gold:#c9a15b;--gold2:#ffe3a8;--sage:#3f7d63;--rose:#b4424d;--card:#fff;--soft:#f1ebdd;--mute:#665d4f}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:radial-gradient(1200px 600px at 50% -10%,#fff 0,#faf5ea 60%) fixed;color:var(--ink);font-family:"Pretendard","Noto Sans KR","Malgun Gothic","Apple SD Gothic Neo",sans-serif;font-size:26px;line-height:1.45;min-height:100vh;word-break:keep-all;overflow-wrap:break-word}
+.screen{display:none;max-width:620px;margin:0 auto;padding:22px 20px 48px;text-align:center}
+.screen.on{display:block;animation:fade .35s ease}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+button{font-family:inherit;cursor:pointer;border:0;color:#fff;font-weight:700;transition:transform .12s}
+button:active{transform:scale(.98)}
+h1{font-family:"Nanum Myeongjo","Noto Serif KR",serif;font-size:40px;line-height:1.25;margin:16px 0 8px}
+
+/* 표지 */
+#start.screen{max-width:none;min-height:100vh;padding:0 0 40px;position:relative;overflow:hidden;color:#fff;
+ background:radial-gradient(800px 520px at 50% 18%,rgba(255,227,168,.45),transparent 65%),linear-gradient(180deg,#1b2a47,#2f4b73 70%,#40608e)}
+#start::before{content:'';position:absolute;left:50%;top:-80px;width:900px;height:900px;margin-left:-450px;opacity:.22;pointer-events:none;
+ background:repeating-conic-gradient(from 0deg at 50% 22%,#ffe3a8 0 6deg,transparent 6deg 24deg);-webkit-mask-image:radial-gradient(circle at 50% 22%,#000 0,transparent 62%);mask-image:radial-gradient(circle at 50% 22%,#000 0,transparent 62%)}
+.cover-in{position:relative;z-index:1;max-width:560px;margin:0 auto;padding:36px 22px 0;text-align:center}
+.emblem{width:112px;height:112px;margin:8px auto 0;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle,#fff6dc,#ffe3a8 60%,#d9a441);box-shadow:0 0 0 6px rgba(255,227,168,.35),0 20px 40px -10px rgba(0,0,0,.5)}
+.emblem span{font-size:56px}
+.eyebrow{margin-top:22px;font-size:20px;letter-spacing:.14em;color:var(--gold2);font-weight:700}
+.cover-title{font-size:46px;margin:8px 0 6px;color:#fff3da;text-shadow:0 3px 0 rgba(0,0,0,.25),0 10px 30px rgba(0,0,0,.4)}
+.tag{font-size:22px;line-height:1.55;color:#e4e9f3;margin-bottom:26px}
+.tag b{color:var(--gold2)}
+.cbtn{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;margin:14px 0;padding:22px 18px;border-radius:24px;font-size:32px;color:#2b1a0e;background:linear-gradient(145deg,#ffe3a8,#d9a441);box-shadow:0 18px 32px -14px rgba(0,0,0,.7)}
+.cbtn.alt{color:#fff;background:rgba(255,255,255,.1);box-shadow:inset 0 0 0 2px rgba(255,227,168,.55);font-size:24px;padding:16px}
+.verse{margin-top:22px;font-size:19px;color:#c5cfe2}
+
+/* 문제 */
+.top{display:flex;justify-content:space-between;align-items:center;font-size:22px;font-weight:700;color:var(--mute)}
+.home{background:var(--soft);color:var(--ink);font-size:20px;padding:8px 14px;border-radius:999px}
+#prog{background:var(--soft);padding:6px 16px;border-radius:999px;color:var(--ink)}
+.bar{height:10px;border-radius:99px;background:var(--soft);margin:12px 4px 0;overflow:hidden}
+.bar i{display:block;height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,var(--gold),var(--navy));transition:width .4s}
+.turn{display:inline-block;margin:12px 0 6px;padding:6px 20px;border-radius:999px;background:linear-gradient(135deg,#4a6b9b,var(--navy2));color:#fff;font-size:22px;font-weight:700}
+.card{background:#fff;border-radius:28px;padding:16px 14px;margin:8px 0 12px;box-shadow:inset 0 0 0 2px rgba(201,161,91,.6),0 18px 36px -22px rgba(40,50,70,.35)}
+.q{font-size:20px;color:var(--mute)}
+.title{font-family:"Nanum Myeongjo","Noto Serif KR",serif;font-size:40px;font-weight:800;margin:8px 0 2px;line-height:1.25;text-wrap:balance}
+.title.story{font-size:27px;line-height:1.5;font-weight:700}
+.slot{min-height:34px;font-size:22px;font-weight:700;color:var(--navy);margin-top:8px;line-height:34px}
+.slot.bad{color:var(--rose)}
+.tools{display:flex;gap:8px}
+.tools button{flex:1;font-size:18px;padding:12px 4px;background:var(--soft);color:var(--ink);border-radius:18px}
+.tools button:disabled{opacity:.5}
+.opt{position:relative;display:block;width:100%;font-size:31px;padding:14px 14px 14px 62px;margin:8px 0;line-height:1.25;border-radius:20px;background:#fff;color:var(--ink);font-weight:800;box-shadow:inset 0 0 0 2px rgba(201,161,91,.75),0 10px 20px -14px rgba(40,50,70,.4)}
+#opts{counter-reset:o}
+.opt{counter-increment:o}
+.opt::before{content:counter(o);position:absolute;left:16px;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;background:var(--soft);color:var(--navy);display:grid;place-items:center;font-size:22px;font-weight:800}
+.opt:disabled{background:#eee8da;color:#9c927f;box-shadow:none}
+.opt.gone{opacity:.35;text-decoration:line-through}
+.opt.ok{background:var(--sage);color:#fff}
+.opt.ok::before{background:rgba(255,255,255,.25);color:#fff}
+.desc{display:none}
+
+/* 팝업 */
+#pop,#quit{position:fixed;inset:0;background:rgba(30,35,50,.55);display:none;align-items:center;justify-content:center;padding:20px;z-index:9}
+#pop.on,#quit.on{display:flex;animation:fade .25s}
+.pbox{background:#fff;border-radius:32px;padding:30px 22px 24px;max-width:540px;width:100%;text-align:center;box-shadow:0 30px 60px -20px rgba(0,0,0,.4)}
+.pbox .emo{font-size:70px}
+.pbox .t{font-family:"Nanum Myeongjo","Noto Serif KR",serif;font-size:34px;font-weight:800;color:var(--navy);margin:8px 0 14px;white-space:pre-line}
+.ans{font-size:22px;color:var(--mute);margin:0 0 14px;line-height:1.5}
+.ans b{display:block;font-size:30px;color:var(--navy);margin-bottom:4px}
+.ans small{display:block;font-size:21px;margin-top:6px}
+.big{display:block;width:100%;font-size:30px;padding:20px 12px;margin:12px 0;border-radius:22px;background:linear-gradient(145deg,#4a6b9b,var(--navy2));box-shadow:0 14px 26px -12px rgba(47,75,115,.6)}
+.big.g{background:linear-gradient(145deg,#52977b,var(--sage));box-shadow:0 14px 26px -12px rgba(63,125,99,.6)}
+.listen{display:block;width:100%;margin:0;padding:16px;font-size:24px;border-radius:18px;background:linear-gradient(145deg,#e6bd6a,#b98a35);color:#2b1a0e}
+
+/* 결과 */
+.rank{display:inline-block;margin:6px 0;padding:10px 26px;border-radius:999px;font-size:30px;font-weight:800;color:#2b1a0e;background:linear-gradient(135deg,var(--gold2),#d9a441)}
+.sub{font-size:24px;color:var(--mute);margin:12px 0 18px}
+.sbox{display:inline-block;min-width:220px;background:#fff;border-radius:24px;padding:16px 22px;font-size:24px;font-weight:700;color:var(--mute);box-shadow:inset 0 0 0 2px rgba(201,161,91,.5)}
+.sbox span{display:block;font-size:56px;color:var(--navy);font-weight:800}
+.sbox small{display:block;font-size:19px;font-weight:600}
+.review{margin:18px 0 6px;text-align:left}
+.rvh{font-size:23px;font-weight:800;color:var(--navy);text-align:center;margin-bottom:10px}
+.rv{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:12px 16px;margin:8px 0;border-radius:16px;background:#fff;box-shadow:inset 0 0 0 1px rgba(201,161,91,.5);font-size:23px}
+.rv span{color:var(--mute);font-size:20px;white-space:nowrap}
+
+/* ===== 교회 분위기의 세련된 디자인 ===== */
+:root{--ink:#222b3a;--navy:#1f3355;--navy2:#162540;--gold:#b98a35;--gold2:#e9cf94;--soft:#f3ede0;--mute:#6a6254}
+body{background:linear-gradient(180deg,#fdfaf3,#f6efe0) fixed;font-family:"Pretendard","Noto Sans KR","Malgun Gothic",sans-serif}
+.screen{padding-top:20px}
+h1,.title,.pbox .t{font-family:"Nanum Myeongjo","Noto Serif KR","Batang",serif}
+/* 표지 */
+#start.screen{background:radial-gradient(700px 480px at 50% 24%,rgba(233,207,148,.38),transparent 62%),linear-gradient(180deg,#101c33,#1f3355 62%,#2a446f)}
+#start::before{opacity:.12}
+.cover-in{padding-top:30px}
+.arch{position:relative;width:176px;height:236px;margin:6px auto 0;padding:7px;border-radius:88px 88px 8px 8px;background:linear-gradient(160deg,#f6e2a8,#b98a35 55%,#e9cf94);box-shadow:0 24px 44px -12px rgba(0,0,0,.6),0 0 60px 6px rgba(233,207,148,.25)}
+.arch-in{position:relative;width:100%;height:100%;overflow:hidden;border-radius:81px 81px 3px 3px;background:radial-gradient(circle at 50% 36%,#fffdf0 0,#fff1c9 28%,#9db6dc 78%,#5b7db3 100%)}
+.rays{position:absolute;inset:0;background:repeating-conic-gradient(from 0deg at 50% 36%,rgba(255,255,255,.55) 0 7deg,transparent 7deg 22deg);opacity:.5}
+.cv,.ch{position:absolute;background:linear-gradient(145deg,#d9a441,#9a6d1f);border-radius:3px;box-shadow:0 2px 6px rgba(80,50,10,.35)}
+.cv{left:50%;top:26%;width:14px;height:96px;margin-left:-7px}
+.ch{left:50%;top:38%;width:58px;height:14px;margin-left:-29px}
+.eyebrow{margin-top:22px;font-size:19px;letter-spacing:.34em;color:var(--gold2);font-weight:600}
+.cover-title{font-size:44px;margin:8px 0 4px;color:#fff6df;letter-spacing:.04em;text-shadow:0 2px 0 rgba(0,0,0,.3),0 10px 28px rgba(0,0,0,.4)}
+.orn{display:flex;align-items:center;justify-content:center;gap:12px;margin:8px 0 14px}
+.orn i{display:block;width:56px;height:1.5px;background:linear-gradient(90deg,transparent,var(--gold2),transparent)}
+.orn b{display:block;width:9px;height:9px;background:var(--gold2);transform:rotate(45deg)}
+.tag{font-size:21px;color:#dfe6f3;margin-bottom:22px}
+.cbtn{font-size:30px;font-weight:700;letter-spacing:.2em;padding:20px 18px;border-radius:999px;background:linear-gradient(145deg,#f3dc9f,#c4953f);color:#2a1d08;box-shadow:0 16px 30px -12px rgba(0,0,0,.7),inset 0 0 0 2px rgba(255,255,255,.35)}
+.verse{margin-top:24px;font-family:"Nanum Myeongjo","Noto Serif KR",serif;font-size:18px;line-height:1.7;color:#b8c4dc}
+/* 문제 화면 */
+.home{background:transparent;color:var(--navy);box-shadow:inset 0 0 0 1.5px rgba(185,138,53,.6)}
+#prog{background:transparent;color:var(--navy);font-family:"Nanum Myeongjo","Noto Serif KR",serif;font-weight:800}
+.bar{height:6px;background:#e8e0cc}
+.bar i{background:linear-gradient(90deg,var(--gold),var(--navy))}
+.turn{display:flex;align-items:center;justify-content:center;gap:14px;background:none;box-shadow:none;color:var(--gold);padding:0;margin:16px 0 6px;font-family:"Nanum Myeongjo","Noto Serif KR",serif;font-size:21px;letter-spacing:.3em;font-weight:700}
+.turn::before,.turn::after{content:'';flex:0 0 40px;height:1.5px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+.card{border-radius:22px;padding:18px 14px;background:linear-gradient(180deg,#fffdf8,#fff);box-shadow:inset 0 0 0 1.5px rgba(185,138,53,.55),0 18px 34px -24px rgba(31,51,85,.45)}
+.title{color:var(--navy)}
+.q{letter-spacing:.02em}
+.tools button{background:#fff;color:var(--navy);box-shadow:inset 0 0 0 1.5px rgba(185,138,53,.5)}
+.opt{border-radius:18px;background:#fff;color:var(--navy2);box-shadow:inset 0 0 0 1.5px rgba(185,138,53,.65),0 10px 20px -16px rgba(31,51,85,.5)}
+.opt::before{background:var(--navy);color:#fff;font-family:"Nanum Myeongjo","Noto Serif KR",serif}
+.opt.ok::before{background:rgba(255,255,255,.28)}
+.slot{color:var(--navy)}
+.slot.bad{color:#8a3040}
+/* 팝업·결과 */
+.pbox{border-radius:26px;box-shadow:inset 0 0 0 1.5px rgba(185,138,53,.6),0 30px 60px -20px rgba(0,0,0,.45)}
+.pbox .t{color:var(--navy)}
+.ans b{color:var(--navy);font-family:"Nanum Myeongjo","Noto Serif KR",serif}
+.big{border-radius:999px;background:linear-gradient(145deg,#2c4a7c,var(--navy2))}
+.big.g{background:linear-gradient(145deg,#4f8f74,#357057)}
+.listen{border-radius:999px;background:linear-gradient(145deg,#f3dc9f,#c4953f)}
+.rank{background:linear-gradient(135deg,#f3dc9f,#c4953f);color:#2a1d08}
+.sbox,.rv{box-shadow:inset 0 0 0 1.5px rgba(185,138,53,.5)}
+h1{color:var(--navy)}
+#start h1{color:#fff6df}
+
+/* ===== 새 기능: 표지 버튼, 절기별, 오늘의 찬송, 책장 ===== */
+.arch{width:140px;height:186px;border-radius:70px 70px 7px 7px}
+.arch-in{border-radius:64px 64px 3px 3px}
+.cv{height:72px;width:12px;margin-left:-6px}.ch{width:44px;height:12px;margin-left:-22px}
+.cover-in{padding-top:20px}
+.eyebrow{margin-top:14px;font-size:17px}
+.cover-title{font-size:38px;margin:4px 0 2px}
+.orn{margin:6px 0 8px}
+.tag{font-size:18px;margin-bottom:14px;line-height:1.5}
+.cbtn{font-size:27px;padding:15px 18px;margin:10px 0;letter-spacing:.12em}
+.cbtn.alt{font-size:22px;padding:13px 16px;letter-spacing:.04em;color:#fff6df;background:rgba(255,255,255,.08);box-shadow:inset 0 0 0 1.5px rgba(233,207,148,.6)}
+.verse{margin-top:14px;font-size:16px}
+.tcard{display:flex;align-items:center;gap:16px;width:100%;margin:12px 0;padding:18px 18px;border-radius:22px;text-align:left;color:var(--navy2);background:#fff;box-shadow:inset 0 0 0 1.5px rgba(185,138,53,.6),0 12px 24px -18px rgba(31,51,85,.5)}
+.tcard em{font-style:normal;font-size:44px;width:64px;height:64px;border-radius:50%;display:grid;place-items:center;background:var(--soft);flex:none}
+.tcard b{display:block;font-size:29px;font-family:"Nanum Myeongjo","Noto Serif KR",serif}
+.tcard small{display:block;font-size:20px;color:var(--mute);font-weight:500;line-height:1.35;margin-top:2px}
+.dcard{padding:26px 16px}
+.dnum{font-family:"Nanum Myeongjo","Noto Serif KR",serif;font-size:64px;font-weight:800;color:var(--gold);line-height:1.1}
+.dname{font-family:"Nanum Myeongjo","Noto Serif KR",serif;font-size:36px;font-weight:800;color:var(--navy);margin:6px 0 14px;line-height:1.25;text-wrap:balance}
+.dstory{font-size:23px;line-height:1.55;color:var(--mute);background:var(--soft);border-radius:16px;padding:12px 14px}
+.tools.two button{font-size:22px;padding:14px 6px}
+#daily .big{margin-top:16px}
+#sq{display:block;width:100%;font-size:28px;padding:16px 20px;border-radius:999px;border:0;background:#fff;box-shadow:inset 0 0 0 1.5px rgba(185,138,53,.7);outline:none;color:var(--navy2);text-align:center;margin:6px 0 12px;font-family:inherit}
+#sq:focus{box-shadow:inset 0 0 0 2.5px var(--navy)}
+.rowh{display:flex;align-items:center;gap:12px;padding:10px 12px 10px 16px;margin:8px 0;border-radius:16px;background:#fff;text-align:left;box-shadow:inset 0 0 0 1px rgba(185,138,53,.45)}
+.rowh .rn{flex:none;min-width:76px;font-family:"Nanum Myeongjo","Noto Serif KR",serif;font-weight:800;font-size:25px;color:var(--gold)}
+.rowh .rt{flex:1;font-size:24px;font-weight:700;color:var(--navy2);line-height:1.3}
+.rowh button{flex:none;width:52px;height:52px;border-radius:50%;font-size:22px;background:linear-gradient(145deg,#2c4a7c,var(--navy2))}
+#ddate{letter-spacing:.1em;font-size:20px;white-space:nowrap}
+</style>
+</head>
+<body>
+
+<section id="start" class="screen on">
+  <div class="cover-in">
+    <div class="arch"><div class="arch-in"><i class="rays"></i><i class="cv"></i><i class="ch"></i></div></div>
+    <div class="eyebrow">은혜의 노래</div>
+    <h1 class="cover-title">찬송가 퀴즈</h1>
+    <div class="orn"><i></i><b></b><i></i></div>
+    <div class="tag">찬송 한 곡에 담긴 은혜와 성경 이야기<br><b>__COUNT__곡</b> 수록 · 원하는 만큼 계속 풀어요</div>
+    <button class="cbtn" onclick="startGame()">계속 풀기</button>
+    <button class="cbtn alt" onclick="openThemes()">⭐ 절기별 찬송</button>
+    <button class="cbtn alt" onclick="openDaily()">📅 오늘의 찬송</button>
+    <button class="cbtn alt" onclick="openShelf()">📖 찬송가 책장</button>
+    <div class="verse">"여호와를 찬양하라 그는 선하시며"<br>시편 135:3</div>
+  </div>
+</section>
+
+<section id="themes" class="screen">
+  <div class="top"><button class="home" onclick="goHome()">‹ 처음으로</button><span></span></div>
+  <h1>절기별 찬송</h1>
+  <div class="orn"><i></i><b></b><i></i></div>
+  <div class="sub">풀고 싶은 때를 골라 보세요</div>
+  <div id="tgrid"></div>
+</section>
+
+<section id="daily" class="screen">
+  <div class="top"><button class="home" onclick="goHome()">‹ 처음으로</button><span></span></div>
+  <div class="turn" id="ddate"></div>
+  <div class="card dcard">
+    <div class="dnum" id="dnum"></div>
+    <div class="dname" id="dname"></div>
+    <div class="dstory" id="dstory"></div>
+  </div>
+  <div class="tools two">
+    <button id="btnSpeakD" onclick="speakDaily()">📢 읽어주기</button>
+    <button onclick="listenToday()">🎵 찬송 듣기</button>
+  </div>
+  <button class="big g" onclick="startDailyQuiz()">🙏 이 찬송으로 문제 풀기</button>
+</section>
+
+<section id="shelf" class="screen">
+  <div class="top"><button class="home" onclick="goHome()">‹ 처음으로</button><span></span></div>
+  <h1>찬송가 책장</h1>
+  <div class="orn"><i></i><b></b><i></i></div>
+  <input id="sq" type="search" inputmode="search" placeholder="번호나 제목을 입력하세요" oninput="renderShelf()" autocomplete="off">
+  <div id="slist"></div>
+</section>
+
+<section id="quiz" class="screen">
+  <div class="top"><button class="home" onclick="askQuit()">‹ 마치기</button><span id="prog"></span></div>
+  <div class="bar"><i id="barfill"></i></div>
+  <div class="turn">오늘의 찬송</div>
+  <div class="card">
+    <div class="q" id="qlabel"></div>
+    <div class="title" id="qtitle"></div>
+    <div class="slot" id="msg"></div>
+  </div>
+  <div class="tools">
+    <button id="btnSpeak" onclick="speak()">📢 읽어주기</button>
+    <button id="btnHint" onclick="showHint()">✨ 힌트 보기</button>
+    <button onclick="listen()">🎵 찬송 듣기</button>
+  </div>
+  <div id="opts"></div>
+</section>
+
+<section id="result" class="screen">
+  <div style="font-size:84px">🕊️</div>
+  <h1 id="rtitle">은혜로운 시간이었어요</h1>
+  <div class="rank" id="rrank"></div>
+  <div class="sub" id="rmsg"></div>
+  <div id="rscore"></div>
+  <div class="review" id="rreview"></div>
+  <button class="big g" onclick="startGame()">🔁 다시 하기</button>
+  <button class="big" onclick="goHome()">🏠 처음 화면으로</button>
+</section>
+
+<div id="pop"><div class="pbox"><div class="emo" id="pemo">🙏</div><div class="t" id="ptxt"></div>
+  <div class="ans" id="pinfo"></div>
+  <button class="big g" id="pnext" onclick="nextQ()">다음 문제 ▶</button>
+  <button class="listen" onclick="listen()">▶ 정답 찬송 들어보기</button>
+</div></div>
+
+<div id="quit"><div class="pbox"><div class="t">여기서 마칠까요?</div><div class="ans" id="qinfo"></div>
+  <button class="big g" onclick="closeQuit()">계속할래요 😊</button>
+  <button class="big" onclick="finishNow()">결과 볼래요</button>
+  <button class="listen" style="background:none;color:#1f3355;box-shadow:inset 0 0 0 1.5px #b98a35" onclick="goHome()">처음으로 (기록 없이)</button></div></div>
+
+<script>
+// [장 번호, 제목, 성경 이야기/사연(없으면 빈 문자열)]
+const H=__DATA__;
+const ALL=__ALL__;
+const THEMES=__THEMES__;
+const AV='1';
+const PRAISE=["할렐루야! 정답이에요","은혜가 넘치네요!","역시 믿음이 깊으세요!","아멘! 잘하셨어요"];
+const RETRY=["괜찮아요! 천천히 다시 골라보세요 😊","거의 다 왔어요! 다시 골라보세요 😊","아깝다! 한 번 더 기회예요 😊"];
+const $=id=>document.getElementById(id);
+const rnd=a=>a[Math.floor(Math.random()*a.length)];
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));$(id).classList.add('on');window.scrollTo(0,0)}
+let qcur,qn=0,answered=0,deck=[],pool=H,queue=null,score,tried,cur,qtype,missed=[];
+function drawItem(){
+  if(queue)return queue.shift();
+  if(!deck.length)deck=shuffle(pool.filter(x=>!qcur||x!==qcur.h));
+  const h=deck.pop();
+  return {h,t:h[2]?rnd(['story','story','title','num']):rnd(['title','num'])};
+}
+function nextQuestion(){qn++;qcur=drawItem();render()}
+
+function askQuit(){$('qinfo').textContent=answered?'지금까지 '+answered+'문제를 푸셨어요':'아직 푼 문제가 없어요';$('quit').classList.add('on')}
+function closeQuit(){$('quit').classList.remove('on')}
+function goHome(){stopVoice();$('pop').classList.remove('on');$('quit').classList.remove('on');show('start')}
+
+function startGame(themeId){
+  missed=[];score=0;answered=0;qn=0;qcur=null;queue=null;pool=H;
+  if(themeId){const t=THEMES.find(x=>x.id===themeId);pool=H.filter(x=>t.nums.includes(x[0]))}
+  deck=shuffle(pool);
+  show('quiz');nextQuestion();
+}
+function todayHymn(){
+  const d=new Date(),day=Math.floor((Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())-Date.UTC(d.getFullYear(),0,0))/864e5);
+  return H[(day+d.getFullYear())%H.length];
+}
+function openThemes(){
+  $('tgrid').innerHTML='';
+  THEMES.forEach(t=>{
+    const c=document.createElement('button');c.className='tcard';
+    c.innerHTML='<em>'+t.icon+'</em><span><b>'+t.name+'</b><small>'+t.desc+' · '+t.nums.length+'곡</small></span>';
+    c.onclick=()=>startGame(t.id);$('tgrid').appendChild(c);
+  });
+  show('themes');
+}
+function openDaily(){
+  const h=todayHymn(),d=new Date();
+  $('ddate').textContent=(d.getMonth()+1)+'월 '+d.getDate()+'일 · 오늘의 찬송';
+  $('dnum').textContent=h[0]+'장';$('dname').textContent=h[1];
+  $('dstory').textContent=h[2]?'📖 '+h[2]:'오늘 하루, 이 찬송을 한 번 불러 보세요 🙏';
+  show('daily');
+}
+function startDailyQuiz(){
+  const h=todayHymn();
+  missed=[];score=0;answered=0;qn=0;qcur=null;pool=H;deck=[];
+  queue=[{h,t:'num'},{h,t:'title'}];if(h[2])queue.push({h,t:'story'});
+  show('quiz');nextQuestion();
+}
+function openShelf(){show('shelf');renderShelf()}
+function renderShelf(){
+  const v=$('sq').value.trim().replace(/\s+/g,'');
+  let r=ALL;
+  if(v)r=/^\d+$/.test(v)?ALL.filter(x=>String(x[0]).startsWith(v)):ALL.filter(x=>x[1].replace(/\s+/g,'').includes(v));
+  const more=r.length>40;r=r.slice(0,40);
+  $('slist').innerHTML=r.length?r.map(x=>'<div class="rowh"><div class="rn">'+x[0]+'장</div><div class="rt">'+x[1]+'</div><button onclick="listenHymn('+x[0]+')">▶</button></div>').join('')+(more?'<div class="sub">더 찾으려면 번호나 제목을 더 입력하세요</div>':''):'<div class="sub">찾는 찬송이 없어요</div>';
+}
+function ytSearch(n,t){window.open('https://www.youtube.com/results?search_query='+encodeURIComponent('새찬송가 '+n+'장 '+t),'_blank','noopener')}
+function listenHymn(n){const x=ALL.find(y=>y[0]===n);if(x)ytSearch(x[0],x[1])}
+function listenToday(){const h=todayHymn();ytSearch(h[0],h[1])}
+async function speakDaily(){
+  if(voiceOn){stopVoice();return}
+  stopVoice();const tok=voiceTok;voiceOn=true;setSpeakBtn();
+  const h=todayHymn();
+  try{for(const u of ['audio/nm/'+h[0]+'.mp3','audio/t/'+h[0]+'.mp3']){if(tok!==voiceTok)return;await playOne(u,tok);await sleep(250)}}
+  catch(e){if(tok===voiceTok)await new Promise(res=>{if(!('speechSynthesis' in window))return res();const u=new SpeechSynthesisUtterance(h[0]+'장. '+h[1]);u.lang='ko-KR';u.onend=()=>res();speechSynthesis.speak(u)})}
+  if(tok===voiceTok){voiceOn=false;setSpeakBtn()}
+}
+function pickOthers(h,n,keyFn){
+  // 비슷한 길이의 제목/번호를 우선 고르되 무작위성도 섞기
+  return shuffle(H.filter(x=>x!==h)).sort((a,b)=>Math.abs(keyFn(a)-keyFn(h))-Math.abs(keyFn(b)-keyFn(h))+(Math.random()-.5)*(keyFn===numKey?260:3)).slice(0,n);
+}
+const numKey=x=>x[0], lenKey=x=>x[1].length;
+function render(){
+  stopVoice();
+  const {h,t}=qcur;tried=false;qtype=t;
+  $('barfill').style.width=(((qn-1)%10+1)*10)+'%';$('prog').textContent=qn+'번째 문제 · 맞힌 '+score+'개';
+  $('qtitle').className='title';
+  if(t==='num'){
+    $('qlabel').textContent='🎶 이 찬송은 몇 장일까요?';
+    $('qtitle').textContent=h[1];
+    cur={ans:String(h[0]),opts:[[String(h[0]),h[0]+'장'],...pickOthers(h,2,numKey).map(x=>[String(x[0]),x[0]+'장'])]};
+  }else if(t==='title'){
+    $('qlabel').textContent='🎶 이 장은 어떤 찬송일까요?';
+    $('qtitle').textContent=h[0]+'장';
+    cur={ans:h[1],opts:[[h[1],h[1]],...pickOthers(h,2,lenKey).map(x=>[x[1],x[1]])]};
+  }else{
+    $('qlabel').textContent='📖 이 이야기와 어울리는 찬송은?';
+    $('qtitle').textContent=h[2];$('qtitle').className='title story';
+    cur={ans:h[1],opts:[[h[1],h[1]],...pickOthers(h,2,lenKey).map(x=>[x[1],x[1]])]};
+  }
+  $('msg').textContent='';$('msg').className='slot';$('btnHint').disabled=false;
+  $('opts').innerHTML='';
+  shuffle(cur.opts).forEach(([v,label])=>{
+    const b=document.createElement('button');b.className='opt';b.dataset.v=v;b.textContent=label;
+    {const n=label.length;b.style.fontSize=n<=7?'31px':n<=10?'27px':'23px'}
+    b.onclick=()=>pick(b,v);$('opts').appendChild(b);
+  });
+}
+function pick(btn,v){
+  const {h}=qcur;
+  if(v===cur.ans){
+    stopVoice();btn.classList.add('ok');dingdong();setTimeout(applause,350);
+    if(!tried)score++;answered++;$('prog').textContent=qn+'번째 문제 · 맞힌 '+score+'개';
+    document.querySelectorAll('.opt').forEach(b=>b.disabled=true);
+    $('pemo').textContent=rnd(['🙏','🕊️','🌟','💐']);
+    $('ptxt').textContent=(answered%10===0?'🎉 '+answered+'문제 달성!\n':'')+(tried?'끝까지 해내셨어요!\n두 번째 도전 성공! 👏':rnd(PRAISE));
+    $('pinfo').innerHTML='<b>'+h[0]+'장 '+h[1]+'</b>'+(h[2]?'<small>📖 '+h[2]+'</small>':'');
+    setTimeout(()=>$('pop').classList.add('on'),600);
+  }else{
+    if(!tried)missed.push(h);
+    tried=true;btn.disabled=true;boop();
+    $('msg').textContent=rnd(RETRY);$('msg').className='slot bad';
+  }
+}
+function nextQ(){
+  $('pop').classList.remove('on');stopVoice();
+  if(queue&&!queue.length)return finish();
+  nextQuestion();
+}
+function finishNow(){
+  closeQuit();stopVoice();$('pop').classList.remove('on');
+  if(answered===0)goHome();else finish();
+}
+function finish(){
+  show('result');
+  const acc=score/answered;
+  const [ri,rn]=answered<3?['🌱','시작이 반이에요']:acc>=.9?['👑','찬양의 달인']:acc>=.7?['📖','찬송 박사']:acc>=.4?['🌿','은혜 가득']:['🌱','함께 배우는 중'];
+  $('rtitle').textContent=answered+'문제를 푸셨어요!';
+  $('rrank').innerHTML='<span>'+ri+'</span> '+rn;
+  $('rmsg').textContent=queue?'오늘의 찬송과 더 가까워지셨어요. 할렐루야 🙏':'끝까지 함께해 주셔서 감사해요. 할렐루야 🙏';
+  $('rscore').innerHTML='<div class="sbox">한 번에 맞힌 개수<small>'+answered+'문제 중</small><span>'+score+'개</span></div>';
+  const uniq=[...new Set(missed)].slice(0,8);
+  $('rreview').innerHTML=uniq.length
+    ?'<div class="rvh">🎼 다시 불러보면 좋은 찬송</div>'+uniq.map(m=>'<div class="rv"><b>'+m[1]+'</b><span>'+m[0]+'장</span></div>').join('')
+    :'<div class="rvh">🎉 한 곡도 안 틀렸어요! 대단해요</div>';
+  chime();setTimeout(applause,500);
+}
+function showHint(){
+  const w=[...document.querySelectorAll('.opt')].filter(b=>b.dataset.v!==cur.ans&&!b.disabled);
+  if(!w.length)return;
+  const b=rnd(w);b.disabled=true;b.classList.add('gone');
+  $('msg').textContent='✨ 틀린 보기 하나를 지웠어요!';$('msg').className='slot';$('btnHint').disabled=true;
+}
+function listen(){const h=qcur.h;ytSearch(h[0],h[1])}
+
+/* ===== 읽어주기: 미리 만든 음성 → 없으면 폰 기본 음성 ===== */
+let voiceAudio,voiceTok=0,voiceOn=false;
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+function setSpeakBtn(){const l=voiceOn?'⏹ 멈추기':'📢 읽어주기';$('btnSpeak').textContent=l;const d=$('btnSpeakD');if(d)d.textContent=l}
+function stopVoice(){voiceTok++;voiceOn=false;if(voiceAudio){voiceAudio.pause();voiceAudio=null}if('speechSynthesis' in window)speechSynthesis.cancel();setSpeakBtn()}
+function playOne(url,tok){return new Promise((res,rej)=>{if(tok!==voiceTok)return;const a=new Audio(url+'?v='+AV);voiceAudio=a;a.onended=()=>res();a.onerror=()=>rej(new Error('audio'));a.play().catch(rej)})}
+function hymnOf(v){return H.find(x=>String(x[0])===v||x[1]===v)}
+async function speak(){
+  if(voiceOn){stopVoice();return}
+  stopVoice();const tok=voiceTok;voiceOn=true;setSpeakBtn();
+  const h=qcur.h,n=h[0];
+  const seq=['audio/q'+qtype+'/'+n+'.mp3'];
+  [...document.querySelectorAll('.opt')].forEach((b,i)=>{
+    if(b.disabled)return;
+    const o=hymnOf(b.dataset.v);
+    seq.push('audio/n/'+(i+1)+'.mp3',qtype==='num'?'audio/nm/'+o[0]+'.mp3':'audio/t/'+o[0]+'.mp3');
+  });
+  try{for(const u of seq){if(tok!==voiceTok)return;await playOne(u,tok);await sleep(200)}}
+  catch(e){if(tok===voiceTok)await speakTTS(h)}
+  if(tok===voiceTok){voiceOn=false;setSpeakBtn()}
+}
+function speakTTS(h){
+  return new Promise(res=>{
+    if(!('speechSynthesis' in window)){$('msg').textContent='이 폰은 읽어주기를 지원하지 않아요';return res()}
+    speechSynthesis.cancel();
+    const ops=[...document.querySelectorAll('.opt')].filter(b=>!b.disabled).map((b,i)=>['일','이','삼'][i]+', '+b.textContent).join('. ');
+    const lines=qtype==='num'?[h[1]+'.','몇 장일까요?',ops]:qtype==='title'?[h[0]+'장.','어떤 찬송일까요?',ops]:[h[2]+'.','어울리는 찬송은 무엇일까요?',ops];
+    const v=bestVoice();
+    lines.forEach((t,i)=>{const u=new SpeechSynthesisUtterance(t);u.lang='ko-KR';if(v)u.voice=v;u.rate=.92;if(i===lines.length-1)u.onend=()=>res();speechSynthesis.speak(u)});
+  });
+}
+function bestVoice(){
+  const ko=speechSynthesis.getVoices().filter(v=>/^ko/i.test(v.lang));
+  const rank=v=>{const n=v.name;let r=0;if(/natural|neural|online/i.test(n))r+=10;if(/google/i.test(n))r+=6;if(/sun-?hi|yuna|유나|선히|heami|혜미/i.test(n))r+=4;if(!v.localService)r+=1;return r};
+  return ko.sort((a,b)=>rank(b)-rank(a))[0]||null;
+}
+
+/* ===== 효과음 (Web Audio) ===== */
+let ac;
+function ctx(){ac=ac||new (window.AudioContext||window.webkitAudioContext)();return ac}
+function tone(f,t,d,type='sine',v=.25){
+  const a=ctx(),o=a.createOscillator(),g=a.createGain();o.type=type;o.frequency.value=f;
+  const st=a.currentTime+t;g.gain.setValueAtTime(v,st);g.gain.exponentialRampToValueAtTime(.001,st+d);
+  o.connect(g);g.connect(a.destination);o.start(st);o.stop(st+d);
+}
+function dingdong(){tone(1318,0,.5);tone(1046,.25,.5);tone(1568,.5,.8)}
+function boop(){tone(330,0,.25,'triangle',.18);tone(262,.18,.3,'triangle',.18)}
+function chime(){[523,659,784,1046,1318].forEach((f,i)=>tone(f,i*.15,.5))}
+function applause(){
+  const a=ctx(),len=Math.floor(a.sampleRate*1.6),buf=a.createBuffer(1,len,a.sampleRate),d=buf.getChannelData(0);
+  for(let i=0;i<len;i++){const env=Math.min(1,i/2000)*Math.max(0,1-i/len);d[i]=(Math.random()*2-1)*env*(Math.random()>.55?1:.25)}
+  const src=a.createBufferSource(),f=a.createBiquadFilter(),g=a.createGain();
+  src.buffer=buf;f.type='bandpass';f.frequency.value=2800;f.Q.value=.6;g.gain.value=.5;
+  src.connect(f);f.connect(g);g.connect(a.destination);src.start();
+}
+</script>
+</body>
+</html>
