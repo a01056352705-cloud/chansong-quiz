@@ -167,6 +167,9 @@ h1{color:var(--navy)}
 .rowh .rt{flex:1;font-size:24px;font-weight:700;color:var(--navy2);line-height:1.3}
 .rowh button{flex:none;width:52px;height:52px;border-radius:50%;font-size:22px;background:linear-gradient(145deg,#2c4a7c,var(--navy2))}
 #ddate{letter-spacing:.1em;font-size:20px;white-space:nowrap}
+.qno{font-family:"Nanum Myeongjo","Noto Serif KR",serif;color:var(--gold);font-size:22px;font-weight:800;margin-top:4px}
+.qno:empty{display:none}
+.blank{display:inline-block;min-width:2.6em;border-bottom:5px solid var(--gold);color:transparent;margin:0 .1em}
 </style>
 </head>
 <body>
@@ -223,6 +226,7 @@ h1{color:var(--navy)}
   <div class="turn">오늘의 찬송</div>
   <div class="card">
     <div class="q" id="qlabel"></div>
+    <div class="qno" id="qno"></div>
     <div class="title" id="qtitle"></div>
     <div class="slot" id="msg"></div>
   </div>
@@ -273,7 +277,7 @@ function drawItem(){
   if(queue)return queue.shift();
   if(!deck.length)deck=shuffle(pool.filter(x=>!qcur||x!==qcur.h));
   const h=deck.pop();
-  return {h,t:h[2]?rnd(['story','story','title','num']):rnd(['title','num'])};
+  return {h,t:h[2]?rnd(['story','story','blank']):'blank'};
 }
 function nextQuestion(){qn++;qcur=drawItem();render()}
 
@@ -310,7 +314,7 @@ function openDaily(){
 function startDailyQuiz(){
   const h=todayHymn();
   missed=[];score=0;answered=0;qn=0;qcur=null;pool=H;deck=[];
-  queue=[{h,t:'num'},{h,t:'title'}];if(h[2])queue.push({h,t:'story'});
+  queue=[{h,t:'blank'}];if(h[2])queue.push({h,t:'story'});shuffle(H.filter(x=>x!==h)).slice(0,2).forEach(x=>queue.push({h:x,t:'blank'}));
   show('quiz');nextQuestion();
 }
 function openShelf(){show('shelf');renderShelf()}
@@ -332,26 +336,33 @@ async function speakDaily(){
   catch(e){if(tok===voiceTok)await new Promise(res=>{if(!('speechSynthesis' in window))return res();const u=new SpeechSynthesisUtterance(h[0]+'장. '+h[1]);u.lang='ko-KR';u.onend=()=>res();speechSynthesis.speak(u)})}
   if(tok===voiceTok){voiceOn=false;setSpeakBtn()}
 }
-function pickOthers(h,n,keyFn){
-  // 비슷한 길이의 제목/번호를 우선 고르되 무작위성도 섞기
-  return shuffle(H.filter(x=>x!==h)).sort((a,b)=>Math.abs(keyFn(a)-keyFn(h))-Math.abs(keyFn(b)-keyFn(h))+(Math.random()-.5)*(keyFn===numKey?260:3)).slice(0,n);
+function blankInfo(h){
+  // 제목에서 가장 긴 낱말(2글자 이상)을 빈칸으로 만든다. 없으면 제목 전체
+  const toks=h[1].split(/\s+/);let bi=-1,bl=1;
+  toks.forEach((w,i)=>{if(w.length>bl){bl=w.length;bi=i}});
+  return bi<0?{toks:[h[1]],bi:0,word:h[1]}:{toks,bi,word:toks[bi]};
 }
-const numKey=x=>x[0], lenKey=x=>x[1].length;
+const BW=[...new Set(H.map(x=>blankInfo(x).word))];
+function pickOthers(h,n,keyFn){
+  return shuffle(H.filter(x=>x!==h)).sort((a,b)=>Math.abs(keyFn(a)-keyFn(h))-Math.abs(keyFn(b)-keyFn(h))+(Math.random()-.5)*3).slice(0,n);
+}
+const lenKey=x=>x[1].length;
 function render(){
   stopVoice();
   const {h,t}=qcur;tried=false;qtype=t;
   $('barfill').style.width=(((qn-1)%10+1)*10)+'%';$('prog').textContent=qn+'번째 문제 · 맞힌 '+score+'개';
   $('qtitle').className='title';
-  if(t==='num'){
-    $('qlabel').textContent='🎶 이 찬송은 몇 장일까요?';
-    $('qtitle').textContent=h[1];
-    cur={ans:String(h[0]),opts:[[String(h[0]),h[0]+'장'],...pickOthers(h,2,numKey).map(x=>[String(x[0]),x[0]+'장'])]};
-  }else if(t==='title'){
-    $('qlabel').textContent='🎶 이 장은 어떤 찬송일까요?';
-    $('qtitle').textContent=h[0]+'장';
-    cur={ans:h[1],opts:[[h[1],h[1]],...pickOthers(h,2,lenKey).map(x=>[x[1],x[1]])]};
+  if(t==='blank'){
+    const bi=blankInfo(h);
+    const wrong=shuffle(BW.filter(w=>w!==bi.word)).sort((a,b)=>Math.abs(a.length-bi.word.length)-Math.abs(b.length-bi.word.length)+(Math.random()-.5)*3).slice(0,2);
+    const lab=w=>bi.toks.map((x,i)=>i===bi.bi?w:x).join(' ');
+    $('qlabel').textContent='🎶 빈칸에 들어갈 말은 무엇일까요?';
+    $('qno').textContent=h[0]+'장';
+    $('qtitle').innerHTML=bi.toks.map((x,i)=>i===bi.bi?'<span class="blank">&nbsp;</span>':x).join(' ');
+    cur={ans:bi.word,opts:[[bi.word,lab(bi.word)],...wrong.map(w=>[w,lab(w)])]};
   }else{
     $('qlabel').textContent='📖 이 이야기와 어울리는 찬송은?';
+    $('qno').textContent='';
     $('qtitle').textContent=h[2];$('qtitle').className='title story';
     cur={ans:h[1],opts:[[h[1],h[1]],...pickOthers(h,2,lenKey).map(x=>[x[1],x[1]])]};
   }
@@ -424,8 +435,8 @@ async function speak(){
   const seq=['audio/q'+qtype+'/'+n+'.mp3'];
   [...document.querySelectorAll('.opt')].forEach((b,i)=>{
     if(b.disabled)return;
-    const o=hymnOf(b.dataset.v);
-    seq.push('audio/n/'+(i+1)+'.mp3',qtype==='num'?'audio/nm/'+o[0]+'.mp3':'audio/t/'+o[0]+'.mp3');
+    const v=b.dataset.v;
+    seq.push('audio/n/'+(i+1)+'.mp3',qtype==='blank'?'audio/w/'+(BW.indexOf(v)+1)+'.mp3':'audio/t/'+hymnOf(v)[0]+'.mp3');
   });
   try{for(const u of seq){if(tok!==voiceTok)return;await playOne(u,tok);await sleep(200)}}
   catch(e){if(tok===voiceTok)await speakTTS(h)}
@@ -435,8 +446,8 @@ function speakTTS(h){
   return new Promise(res=>{
     if(!('speechSynthesis' in window)){$('msg').textContent='이 폰은 읽어주기를 지원하지 않아요';return res()}
     speechSynthesis.cancel();
-    const ops=[...document.querySelectorAll('.opt')].filter(b=>!b.disabled).map((b,i)=>['일','이','삼'][i]+', '+b.textContent).join('. ');
-    const lines=qtype==='num'?[h[1]+'.','몇 장일까요?',ops]:qtype==='title'?[h[0]+'장.','어떤 찬송일까요?',ops]:[h[2]+'.','어울리는 찬송은 무엇일까요?',ops];
+    const ops=[...document.querySelectorAll('.opt')].filter(b=>!b.disabled).map((b,i)=>['일','이','삼'][i]+', '+(qtype==='blank'?b.dataset.v:b.textContent)).join('. ');
+    const lines=qtype==='blank'?[h[1].replace(blankInfo(h).word,'빈칸')+'.','빈칸에 들어갈 말은 무엇일까요?',ops]:[h[2]+'.','어울리는 찬송은 무엇일까요?',ops];
     const v=bestVoice();
     lines.forEach((t,i)=>{const u=new SpeechSynthesisUtterance(t);u.lang='ko-KR';if(v)u.voice=v;u.rate=.92;if(i===lines.length-1)u.onend=()=>res();speechSynthesis.speak(u)});
   });
