@@ -170,6 +170,28 @@ h1{color:var(--navy)}
 .qno{font-family:"Nanum Myeongjo","Noto Serif KR",serif;color:var(--gold);font-size:22px;font-weight:800;margin-top:4px}
 .qno:empty{display:none}
 .blank{display:inline-block;min-width:2.6em;border-bottom:5px solid var(--gold);color:transparent;margin:0 .1em}
+.slot{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tools button{font-size:21px;padding:14px 6px}
+
+/* ===== 중간 개선 ===== */
+.turn,.qno,.dnum,.rowh .rn{color:#8a6218}
+.home{font-size:22px;padding:10px 16px}
+.dim{font-weight:600;color:#7d7566}
+.sw{color:var(--navy2)}
+.opt.ok .dim{color:rgba(255,255,255,.85)}.opt.ok .sw{color:#fff}
+.opt.gone{opacity:1;background:#ece5d3;color:#6f6755;text-decoration:line-through;padding-right:90px}
+.opt.gone .dim,.opt.gone .sw{color:#6f6755}
+.opt.gone::after{content:'지움';position:absolute;right:16px;top:50%;transform:translateY(-50%);font-size:18px;font-weight:700;text-decoration:none;color:#6a6254;background:#fff;border-radius:999px;padding:2px 12px}
+.big:disabled{opacity:.55}
+.quitlink{display:block;margin:22px auto 0;background:none;color:#665d4f;font-size:20px;text-decoration:underline;padding:8px 12px;font-weight:600}
+.zoombtn{display:block;margin:12px auto 0;background:none;color:#b8c4dc;font-size:17px;text-decoration:underline;padding:6px;font-weight:500}
+body.z1{zoom:1.12}body.z2{zoom:1.25}
+@media (max-height:700px){
+  .screen{padding-top:12px}.turn{display:none}
+  .card{padding:12px 12px;margin:6px 0 8px}.title{font-size:34px;margin:4px 0 0}.title.story{font-size:23px}
+  .q{font-size:18px}.opt{font-size:27px;padding-top:9px;padding-bottom:9px;margin:6px 0}.opt::before{width:34px;height:34px;font-size:19px}
+  .tools button{padding:10px 4px;font-size:18px}.slot{min-height:28px;line-height:28px;margin-top:4px}
+}
 </style>
 </head>
 <body>
@@ -181,10 +203,12 @@ h1{color:var(--navy)}
     <h1 class="cover-title">찬송가 퀴즈</h1>
     <div class="orn"><i></i><b></b><i></i></div>
     <div class="tag">찬송 한 곡에 담긴 은혜와 성경 이야기<br><b>__COUNT__곡</b> 수록 · 원하는 만큼 계속 풀어요</div>
+    <button class="cbtn alt" id="resumeBtn" style="display:none" onclick="resumeGame()"></button>
     <button class="cbtn" onclick="startGame()">계속 풀기</button>
     <button class="cbtn alt" onclick="openThemes()">⭐ 절기별 찬송</button>
     <button class="cbtn alt" onclick="openDaily()">📅 오늘의 찬송</button>
     <button class="cbtn alt" onclick="openShelf()">📖 찬송가 책장</button>
+    <button class="zoombtn" id="zoomBtn" onclick="cycleZoom()"></button>
     <div class="verse">"여호와를 찬양하라 그는 선하시며"<br>시편 135:3</div>
   </div>
 </section>
@@ -223,17 +247,16 @@ h1{color:var(--navy)}
 <section id="quiz" class="screen">
   <div class="top"><button class="home" onclick="askQuit()">‹ 마치기</button><span id="prog"></span></div>
   <div class="bar"><i id="barfill"></i></div>
-  <div class="turn">오늘의 찬송</div>
+  <div class="turn" id="qturn">찬송가 퀴즈</div>
   <div class="card">
     <div class="q" id="qlabel"></div>
     <div class="qno" id="qno"></div>
     <div class="title" id="qtitle"></div>
-    <div class="slot" id="msg"></div>
+    <div class="slot" id="msg" aria-live="polite"></div>
   </div>
   <div class="tools">
     <button id="btnSpeak" onclick="speak()">📢 읽어주기</button>
     <button id="btnHint" onclick="showHint()">✨ 힌트 보기</button>
-    <button onclick="listen()">🎵 찬송 듣기</button>
   </div>
   <div id="opts"></div>
 </section>
@@ -245,20 +268,20 @@ h1{color:var(--navy)}
   <div class="sub" id="rmsg"></div>
   <div id="rscore"></div>
   <div class="review" id="rreview"></div>
-  <button class="big g" onclick="startGame()">🔁 다시 하기</button>
+  <button class="big g" onclick="replay()">🔁 다시 하기</button>
   <button class="big" onclick="goHome()">🏠 처음 화면으로</button>
 </section>
 
-<div id="pop"><div class="pbox"><div class="emo" id="pemo">🙏</div><div class="t" id="ptxt"></div>
+<div id="pop" role="dialog" aria-modal="true" aria-label="정답 안내"><div class="pbox"><div class="emo" id="pemo">🙏</div><div class="t" id="ptxt"></div>
   <div class="ans" id="pinfo"></div>
   <button class="big g" id="pnext" onclick="nextQ()">다음 문제 ▶</button>
   <button class="listen" onclick="listen()">▶ 정답 찬송 들어보기</button>
 </div></div>
 
-<div id="quit"><div class="pbox"><div class="t">여기서 마칠까요?</div><div class="ans" id="qinfo"></div>
+<div id="quit" role="dialog" aria-modal="true" aria-label="마치기 확인"><div class="pbox"><div class="t">여기서 마칠까요?</div><div class="ans" id="qinfo"></div>
   <button class="big g" onclick="closeQuit()">계속할래요 😊</button>
   <button class="big" onclick="finishNow()">결과 볼래요</button>
-  <button class="listen" style="background:none;color:#1f3355;box-shadow:inset 0 0 0 1.5px #b98a35" onclick="goHome()">처음으로 (기록 없이)</button></div></div>
+  <button class="quitlink" onclick="clearSave();goHome()">처음으로 (기록 없이)</button></div></div>
 
 <script>
 // [장 번호, 제목, 성경 이야기/사연(없으면 빈 문자열)]
@@ -266,13 +289,44 @@ const H=__DATA__;
 const ALL=__ALL__;
 const THEMES=__THEMES__;
 const AV='1';
-const PRAISE=["할렐루야! 정답이에요","은혜가 넘치네요!","역시 믿음이 깊으세요!","아멘! 잘하셨어요"];
-const RETRY=["괜찮아요! 천천히 다시 골라보세요 😊","거의 다 왔어요! 다시 골라보세요 😊","아깝다! 한 번 더 기회예요 😊"];
+const PRAISE=["할렐루야! 정답이에요","은혜가 넘치네요!","아멘! 잘하셨어요","참 잘 아시네요!"];
+const RETRY=["다시 골라보세요 😊","한 번 더 기회예요 😊","거의 다 왔어요 😊"];
 const $=id=>document.getElementById(id);
 const rnd=a=>a[Math.floor(Math.random()*a.length)];
 const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
-function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));$(id).classList.add('on');window.scrollTo(0,0)}
-let qcur,qn=0,answered=0,deck=[],pool=H,queue=null,score,tried,cur,qtype,missed=[];
+let navPushed=false;
+function pushNav(){if(!navPushed){try{history.pushState({app:1},'')}catch(e){}navPushed=true}}
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));$(id).classList.add('on');window.scrollTo(0,0);
+  if(id!=='start')pushNav();else updateResume();
+}
+// 폰의 뒤로 가기: 문제를 푸는 중이면 마칠지 먼저 묻고, 다른 화면이면 처음 화면으로
+window.addEventListener('popstate',()=>{
+  navPushed=false;
+  const on=document.querySelector('.screen.on');
+  if(!on||on.id==='start')return;
+  if(on.id==='quiz'){
+    if($('quit').classList.contains('on'))closeQuit();else if($('pop').classList.contains('on')){/* 정답 팝업은 그대로 */}else askQuit();
+    pushNav();return;
+  }
+  stopVoice();show('start');
+});
+const SAVE_KEY='chansong-quiz-save';
+function saveSession(){
+  if(queue)return;
+  try{localStorage.setItem(SAVE_KEY,JSON.stringify({theme:lastTheme,score,answered,missed:missed.map(m=>m[0])}))}catch(e){}
+}
+function loadSave(){try{const s=JSON.parse(localStorage.getItem(SAVE_KEY)||'null');return s&&s.answered>0?s:null}catch(e){return null}}
+function clearSave(){try{localStorage.removeItem(SAVE_KEY)}catch(e){}}
+function updateResume(){
+  const b=$('resumeBtn');if(!b)return;
+  const s=loadSave();
+  b.style.display=s?'':'none';
+  if(s)b.textContent='▶ 이어서 풀기 ('+s.answered+'문제 푼 상태)';
+}
+function resumeGame(){const s=loadSave();if(s)startGame(s.theme,s)}
+function replay(){lastDaily?startDailyQuiz():startGame(lastTheme)}
+let qcur,qn=0,answered=0,deck=[],pool=H,queue=null,score,tried,cur,qtype,missed=[],lastTheme=null,lastDaily=false;
 function drawItem(){
   if(queue)return queue.shift();
   if(!deck.length)deck=shuffle(pool.filter(x=>!qcur||x!==qcur.h));
@@ -285,15 +339,25 @@ function askQuit(){$('qinfo').textContent=answered?'지금까지 '+answered+'문
 function closeQuit(){$('quit').classList.remove('on')}
 function goHome(){stopVoice();$('pop').classList.remove('on');$('quit').classList.remove('on');show('start')}
 
-function startGame(themeId){
-  missed=[];score=0;answered=0;qn=0;qcur=null;queue=null;pool=H;
-  if(themeId){const t=THEMES.find(x=>x.id===themeId);pool=H.filter(x=>t.nums.includes(x[0]))}
+function startGame(themeId,resume){
+  missed=[];score=0;answered=0;qn=0;qcur=null;queue=null;pool=H;lastTheme=themeId||null;lastDaily=false;
+  $('qturn').textContent='찬송가 퀴즈';
+  if(themeId){const t=THEMES.find(x=>x.id===themeId);pool=H.filter(x=>t.nums.includes(x[0]));$('qturn').textContent=t.name+' 찬송'}
+  if(resume){score=resume.score;answered=resume.answered;qn=resume.answered;missed=resume.missed.map(n=>H.find(x=>x[0]===n)).filter(Boolean)}
   deck=shuffle(pool);
   show('quiz');nextQuestion();
 }
+function seasonPool(d){
+  const m=d.getMonth()+1,day=d.getDate();
+  const ids=m===12?['xmas']:m===11?['harvest']:m===1?['newyear']:((m===3&&day>=15)||m===4)?['easter']:[];
+  const nums=THEMES.filter(t=>ids.includes(t.id)).flatMap(t=>t.nums);
+  const p=nums.length?H.filter(x=>nums.includes(x[0])):H.filter(x=>x[2]);
+  return p.length?p:H;
+}
 function todayHymn(){
   const d=new Date(),day=Math.floor((Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())-Date.UTC(d.getFullYear(),0,0))/864e5);
-  return H[(day+d.getFullYear())%H.length];
+  const p=seasonPool(d);
+  return p[(day+d.getFullYear())%p.length];
 }
 function openThemes(){
   $('tgrid').innerHTML='';
@@ -313,7 +377,7 @@ function openDaily(){
 }
 function startDailyQuiz(){
   const h=todayHymn();
-  missed=[];score=0;answered=0;qn=0;qcur=null;pool=H;deck=[];
+  missed=[];score=0;answered=0;qn=0;qcur=null;pool=H;deck=[];lastDaily=true;$('qturn').textContent='오늘의 찬송';
   queue=[{h,t:'blank'}];if(h[2])queue.push({h,t:'story'});shuffle(H.filter(x=>x!==h)).slice(0,2).forEach(x=>queue.push({h:x,t:'blank'}));
   show('quiz');nextQuestion();
 }
@@ -336,10 +400,12 @@ async function speakDaily(){
   catch(e){if(tok===voiceTok)await new Promise(res=>{if(!('speechSynthesis' in window))return res();const u=new SpeechSynthesisUtterance(h[0]+'장. '+h[1]);u.lang='ko-KR';u.onend=()=>res();speechSynthesis.speak(u)})}
   if(tok===voiceTok){voiceOn=false;setSpeakBtn()}
 }
+const BLANK_OV={"1":"근원","31":"복되신","94":"귀한","121":"구주","184":"불길","295":"빠진","324":"오라","369":"맡은","383":"산을","585":"강한","588":"나는","591":"농부","610":"지난","639":"함께"};
 function blankInfo(h){
   // 제목에서 가장 긴 낱말(2글자 이상)을 빈칸으로 만든다. 없으면 제목 전체
   const toks=h[1].split(/\s+/);let bi=-1,bl=1;
-  toks.forEach((w,i)=>{if(w.length>bl){bl=w.length;bi=i}});
+  const ov=BLANK_OV[h[0]];if(ov){const k=toks.indexOf(ov);if(k>=0)return {toks,bi:k,word:toks[k]}}
+  toks.forEach((w,i)=>{if(w.length>=2&&w.length>=bl){bl=w.length;bi=i}});
   return bi<0?{toks:[h[1]],bi:0,word:h[1]}:{toks,bi,word:toks[bi]};
 }
 const BW=[...new Set(H.map(x=>blankInfo(x).word))];
@@ -347,6 +413,28 @@ function pickOthers(h,n,keyFn){
   return shuffle(H.filter(x=>x!==h)).sort((a,b)=>Math.abs(keyFn(a)-keyFn(h))-Math.abs(keyFn(b)-keyFn(h))+(Math.random()-.5)*3).slice(0,n);
 }
 const lenKey=x=>x[1].length;
+const NORM=s=>s.replace(/\s+/g,'');
+const REAL=ALL.map(x=>[x[1],NORM(x[1])]);
+function lev(a,b){
+  const m=a.length,n=b.length;let p=[...Array(n+1).keys()];
+  for(let i=1;i<=m;i++){const c=[i];for(let j=1;j<=n;j++)c[j]=Math.min(p[j]+1,c[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1));p=c}
+  return p[n];
+}
+// 실제 다른 찬송 제목과 같거나 비슷하면(글자 2개 이하 차이) 보기로 쓰지 않는다
+function tooClose(label,h){const n=NORM(label);return REAL.some(([t,tn])=>t!==h[1]&&(tn===n||(Math.abs(tn.length-n.length)<=2&&lev(tn,n)<=2)))}
+function pickWrongWords(bi,lab,h){
+  // 점수가 좋은 후보부터 하나씩 검사해서, 필요한 2개를 찾으면 바로 멈춘다 (폰에서도 빠르게)
+  const sc=new Map();
+  const base=BW.filter(w=>w!==bi.word);
+  base.forEach(w=>sc.set(w,(w.slice(-1)===bi.word.slice(-1)?-3:0)+Math.abs(w.length-bi.word.length)+Math.random()*2));
+  base.sort((x,y)=>sc.get(x)-sc.get(y));
+  const out=[];
+  for(const w of base){if(out.length>=2)break;if(!tooClose(lab(w),h))out.push(w)}
+  for(const w of base){if(out.length>=2)break;if(!out.includes(w))out.push(w)}
+  return out;
+}
+const themeIds=h=>THEMES.filter(t=>t.nums.includes(h[0])).map(t=>t.id);
+const SAYEON=new Set([23,258,305,369,438,585]);
 function render(){
   stopVoice();
   const {h,t}=qcur;tried=false;qtype=t;
@@ -354,22 +442,29 @@ function render(){
   $('qtitle').className='title';
   if(t==='blank'){
     const bi=blankInfo(h);
-    const wrong=shuffle(BW.filter(w=>w!==bi.word)).sort((a,b)=>Math.abs(a.length-bi.word.length)-Math.abs(b.length-bi.word.length)+(Math.random()-.5)*3).slice(0,2);
     const lab=w=>bi.toks.map((x,i)=>i===bi.bi?w:x).join(' ');
+    const wrong=pickWrongWords(bi,lab,h);
     $('qlabel').textContent='🎶 빈칸에 들어갈 말은 무엇일까요?';
     $('qno').textContent=h[0]+'장';
     $('qtitle').innerHTML=bi.toks.map((x,i)=>i===bi.bi?'<span class="blank">&nbsp;</span>':x).join(' ');
     cur={ans:bi.word,opts:[[bi.word,lab(bi.word)],...wrong.map(w=>[w,lab(w)])]};
+    cur.html=w=>bi.toks.map((x,i)=>i===bi.bi?'<b class="sw">'+w+'</b>':'<span class="dim">'+x+'</span>').join(' ');
   }else{
-    $('qlabel').textContent='📖 이 이야기와 어울리는 찬송은?';
+    $('qlabel').textContent=SAYEON.has(h[0])?'📖 이 사연과 어울리는 찬송은?':'📖 이 이야기와 어울리는 찬송은?';
     $('qno').textContent='';
     $('qtitle').textContent=h[2];$('qtitle').className='title story';
-    cur={ans:h[1],opts:[[h[1],h[1]],...pickOthers(h,2,lenKey).map(x=>[x[1],x[1]])]};
+    // 같은 절기의 찬송은 보기에서 빼서 정답이 겹치지 않게 한다
+    const mine=themeIds(h);
+    let others=H.filter(x=>x!==h&&x[1]!==h[1]&&!themeIds(x).some(id=>mine.includes(id)));
+    if(others.length<2)others=H.filter(x=>x!==h);
+    const two=shuffle(others).sort((a,b)=>Math.abs(lenKey(a)-lenKey(h))-Math.abs(lenKey(b)-lenKey(h))+(Math.random()-.5)*3).slice(0,2);
+    cur={ans:h[1],opts:[[h[1],h[1]],...two.map(x=>[x[1],x[1]])]};
   }
   $('msg').textContent='';$('msg').className='slot';$('btnHint').disabled=false;
   $('opts').innerHTML='';
   shuffle(cur.opts).forEach(([v,label])=>{
-    const b=document.createElement('button');b.className='opt';b.dataset.v=v;b.textContent=label;
+    const b=document.createElement('button');b.className='opt';b.dataset.v=v;
+    if(qtype==='blank'&&cur.html)b.innerHTML=cur.html(v);else b.textContent=label;
     {const n=label.length;b.style.fontSize=n<=7?'31px':n<=10?'27px':'23px'}
     b.onclick=()=>pick(b,v);$('opts').appendChild(b);
   });
@@ -378,16 +473,17 @@ function pick(btn,v){
   const {h}=qcur;
   if(v===cur.ans){
     stopVoice();btn.classList.add('ok');dingdong();setTimeout(applause,350);
-    if(!tried)score++;answered++;$('prog').textContent=qn+'번째 문제 · 맞힌 '+score+'개';
+    if(!tried)score++;answered++;$('prog').textContent=qn+'번째 문제 · 맞힌 '+score+'개';saveSession();
     document.querySelectorAll('.opt').forEach(b=>b.disabled=true);
     $('pemo').textContent=rnd(['🙏','🕊️','🌟','💐']);
     $('ptxt').textContent=(answered%10===0?'🎉 '+answered+'문제 달성!\n':'')+(tried?'끝까지 해내셨어요!\n두 번째 도전 성공! 👏':rnd(PRAISE));
     $('pinfo').innerHTML='<b>'+h[0]+'장 '+h[1]+'</b>'+(h[2]?'<small>📖 '+h[2]+'</small>':'');
-    setTimeout(()=>$('pop').classList.add('on'),600);
+    setTimeout(()=>{$('pop').classList.add('on');const nb=$('pnext');nb.disabled=true;setTimeout(()=>{nb.disabled=false;try{nb.focus()}catch(e){}},900)},600);
   }else{
     if(!tried)missed.push(h);
     tried=true;btn.disabled=true;boop();
-    $('msg').textContent=rnd(RETRY);$('msg').className='slot bad';
+    const left=[...document.querySelectorAll('.opt')].filter(b=>!b.disabled).length;
+    $('msg').textContent=left===1?'남은 보기가 정답이에요 😊':rnd(RETRY);$('msg').className='slot bad';
   }
 }
 function nextQ(){
@@ -400,14 +496,14 @@ function finishNow(){
   if(answered===0)goHome();else finish();
 }
 function finish(){
-  show('result');
+  clearSave();show('result');
   const acc=score/answered;
-  const [ri,rn]=answered<3?['🌱','시작이 반이에요']:acc>=.9?['👑','찬양의 달인']:acc>=.7?['📖','찬송 박사']:acc>=.4?['🌿','은혜 가득']:['🌱','함께 배우는 중'];
+  const [ri,rn]=answered<3?['🌱','시작이 반이에요']:acc>=.9?['🌟','찬송에 푹 빠지셨어요']:acc>=.7?['📖','찬송과 가까워졌어요']:acc>=.4?['🌿','은혜 가득']:['🌱','함께 배우는 중'];
   $('rtitle').textContent=answered+'문제를 푸셨어요!';
   $('rrank').innerHTML='<span>'+ri+'</span> '+rn;
   $('rmsg').textContent=queue?'오늘의 찬송과 더 가까워지셨어요. 할렐루야 🙏':'끝까지 함께해 주셔서 감사해요. 할렐루야 🙏';
   $('rscore').innerHTML='<div class="sbox">한 번에 맞힌 개수<small>'+answered+'문제 중</small><span>'+score+'개</span></div>';
-  const uniq=[...new Set(missed)].slice(0,8);
+  const uniq=[...new Set(missed)].slice(0,5);
   $('rreview').innerHTML=uniq.length
     ?'<div class="rvh">🎼 다시 불러보면 좋은 찬송</div>'+uniq.map(m=>'<div class="rv"><b>'+m[1]+'</b><span>'+m[0]+'장</span></div>').join('')
     :'<div class="rvh">🎉 한 곡도 안 틀렸어요! 대단해요</div>';
@@ -417,7 +513,7 @@ function showHint(){
   const w=[...document.querySelectorAll('.opt')].filter(b=>b.dataset.v!==cur.ans&&!b.disabled);
   if(!w.length)return;
   const b=rnd(w);b.disabled=true;b.classList.add('gone');
-  $('msg').textContent='✨ 틀린 보기 하나를 지웠어요!';$('msg').className='slot';$('btnHint').disabled=true;
+  $('msg').textContent='✨ 보기 하나를 지웠어요';$('msg').className='slot';$('btnHint').disabled=true;
 }
 function listen(){const h=qcur.h;ytSearch(h[0],h[1])}
 
@@ -476,6 +572,11 @@ function applause(){
   src.buffer=buf;f.type='bandpass';f.frequency.value=2800;f.Q.value=.6;g.gain.value=.5;
   src.connect(f);f.connect(g);g.connect(a.destination);src.start();
 }
+const ZL=['글씨 보통','글씨 크게','글씨 아주 크게'];let zi=0;
+function applyZoom(i){zi=i;document.body.classList.remove('z1','z2');if(i)document.body.classList.add('z'+i);const b=$('zoomBtn');if(b)b.textContent='🔍 '+ZL[i]+' · 눌러서 바꾸기'}
+function cycleZoom(){applyZoom((zi+1)%3);try{localStorage.setItem('chansong-zoom',String(zi))}catch(e){}}
+try{applyZoom(Number(localStorage.getItem('chansong-zoom'))||0)}catch(e){applyZoom(0)}
+updateResume();
 </script>
 </body>
 </html>
